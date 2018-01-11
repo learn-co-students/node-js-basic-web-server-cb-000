@@ -27,8 +27,7 @@ class Message {
   }
 }
 
-// Use body parser to handle post data.
-router.use(bodyParser.json());
+
 
 router.get('/', (request, response) => {
   response.setHeader('Content-Type', 'text/plain; charset=utf-8');
