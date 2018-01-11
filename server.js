@@ -27,64 +27,91 @@ class Message {
   }
 }
 
+// Use body parser to handle post data.
+router.use(bodyParser.json());
 
 router.get('/', (request, response) => {
-  response.writeHead(200, {
-    'Content-Type': 'text/plain; charset=utf-8'
+  response.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  response.end('Hello, World!');
+});
+
+router.get('/messages', (request, response) => {
+  let url = urlParser.parse(request.url),
+      params = querystring.parse(url.query);
+
+  let result = JSON.stringify(messages);
+
+  response.setHeader('Content-Type', 'application/json; charset=utf-8');
+
+  if (params.encrypt) {
+    response.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    return bcrypt.hash(result, 10, (error, hashed) => {
+      if (error) {
+        throw new Error();
+      }
+      response.end(hashed);
+    });
+  }
+
+  response.end(result);
+});
+
+router.get('/message/:id', (request, response) => {
+  let url    = urlParser.parse(request.url),
+      params = querystring.parse(url.query);
+
+  response.setHeader('Content-Type', 'application/json; charset=utf-8');
+
+  if (!request.params.id) {
+    response.statusCode = 400;
+    response.statusMessage = "No message id provided.";
+    response.end();
+    return;
+  }
+
+  const found = messages.find((message) => {
+    return message.id == request.params.id;
   });
-  response.write("Hello, World!");
-  response.end();
+
+  if (!found) {
+    response.statusCode = 404;
+    response.statusMessage = `Unable to find a message with id ${request.params.id}`;
+    response.end();
+    return;
+  }
+
+  const result = JSON.stringify(found);
+
+  if (params.encrypt) {
+    response.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    return bcrypt.hash(result, 10, (error, hashed) => {
+      if (error) {
+        throw new Error();
+      }
+      response.end(hashed);
+    });
+  }
+
+  response.end(result);
 });
 
 router.post('/message', (request, response) => {
-  let message = request.body.message;
-  let msgObj = new Message(message);
-  messages.push(msgObj);
+  let newMsg;
 
   response.setHeader('Content-Type', 'application/json; charset=utf-8');
-  response.end(JSON.stringify(msgObj.id));
+
+  if (!request.body.message) {
+    response.statusCode = 400;
+    response.statusMessage = 'No message provided.';
+    response.end();
+    return;
+  }
+
+  newMsg = new Message(request.body.message);
+  messages.push(newMsg);
+
+  response.end(JSON.stringify(newMsg.id));
 });
-
-
-
-router.get('/messages', (request, response) => {
-  let url = urlParser.parse(request.url), params = querystring.parse(url.query);
-   const messageList = JSON.stringify(messages);
-  response.setHeader('Content-Type', 'application/json; charset=utf-8');
-
-    if(params.encrypt){
-      response.setHeader('Content-Type', 'text/plain; charset=utf-8');
-
-      return bcrypt.hash(messageList, 10, function(err,hash) {
-        if(err){
-          throw new Error();
-        }
-              response.end(hash);
-      });
-    }
-
-
-  response.end(messageList);
-});
-
-
-router.get('/messages/:id', (request, response) => {
-  let url = urlParser.parse(request.url), params = querystring.parse(url.query);
-  console.log(params);
-  const msgId = parseInt(request.params["id"]);
-
-
-  const foundMsg = messages.find(function(message) {
-    return message.id === msgId;
-  });
-
-  const result = JSON.stringify(foundMsg);
-
-  response.end(result);
-
-
-});
-
 
 const server = http.createServer((request, response) => {
   router(request, response, finalhandler(request, response));
