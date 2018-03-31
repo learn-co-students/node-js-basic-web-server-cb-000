@@ -31,6 +31,7 @@
   "dependencies": {
     "bcrypt": "^0.8.5",
     "body-parser": "^1.15.0",
+    "crypto": "^1.0.1",
     "finalhandler": "^0.4.1",
     "router": "^1.1.4"
   }
