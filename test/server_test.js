@@ -4,7 +4,7 @@ const chai = require('chai');
 const expect = chai.expect;
 const should = chai.should();
 const request = require('supertest');
-const crypto = require('crypto');
+const crypto = require('bcrypt');
 
 const server = require('../server');
 const baseUrl = 'http://localhost:3000';
