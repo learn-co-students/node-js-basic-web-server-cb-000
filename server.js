@@ -32,20 +32,45 @@ router.post('/message', (request, response) => {
   response.end() ;
 });
 router.get('/messages', (request, response) => {
-  response.setHeader('Content-Type', 'application/json; charset=utf-8') ;
   response.statusCode = 200 ;
-  response.end(JSON.stringify(messages)) ;
-
+  if (request.url.includes('encrypt')) {
+    response.setHeader('Content-Type', 'text/plain; charset=utf-8') ;
+    var temp = JSON.stringify(messages) ;
+    return bcrypt.hash(temp, 10, (error, hash) =>{
+      if (error) {
+        response.end(thing) ;
+      }
+      response.end(hash) ;
+    })
+  }
+  else {
+    response.setHeader('Content-Type', 'application/json; charset=utf-8') ;
+    response.end(JSON.stringify(messages)) ;
+  }
 })
 router.get('/message/:id', (request, response) => {
-  response.setHeader('Content-Type', 'application/json; charset=utf-8') ;
   response.statusCode = 200 ;
   var mess = messages.find(function(message){
     return   message.id == request.params.id
   })
   var thing = "no such luck"
-  if (!!mess){thing = JSON.stringify(mess) }
-  response.end(thing) ;
+
+  if (!request.url.includes('encrypt')) {
+    response.setHeader('Content-Type', 'application/json; charset=utf-8') ;
+    if (!!mess){thing = JSON.stringify(mess) }
+    response.end(thing) ;
+  }
+  else{
+    var temp = JSON.stringify(mess) ;
+    response.setHeader('Content-Type', 'text/plain; charset=utf-8') ;
+    return bcrypt.hash(temp, 5, (error, hash) => {
+      if (error) {
+        throw new Error();
+      }
+      console.log("happening in hash")
+      response.end(hash);
+    });
+  }
 });
 
 
